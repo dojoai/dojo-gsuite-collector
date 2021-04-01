@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <base target="=_top">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>
+        window.addEventListener('load', preventFormSubmit);
+
+        function preventFormSubmit() {
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+
+        function clearSettings() {
+            if (!confirm('Are you sure you want to clear all settings?')) {
+                return
+            }
+
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .showSidebar('trigger_frontend', 'Retrieve Data from BigQuery');
+        }
+
+        function isFormInValid() {
+            if (($('#getMessagesCb').prop('checked') === false) && $('#getEventsCb').prop('checked') === false) return "Please select at least Emails or Calendar."
+
+            if ($("#before").val() === "" || $("#after").val() === "") return "Start and End Dates are required"
+            if (($("#before").val() !== "" || $("#after").val() !== "") && $("#before").val() < $("#after").val()) return "End Date must occur after Start Date"
+
+            return false
+        }
+
+        function onFailure(e) {
+            var error = document.getElementById("error")
+            error.innerText = e
+            error.style.visibility = "visible"
+        }
+
+        function onSuccess() {
+            hideError()
+            google.script.host.close();
+        }
+
+        function handleFormSubmit(formObject) {
+
+            var inValid = isFormInValid();
+
+            if (inValid) {
+                onFailure(inValid)
+                return
+            }
+
+            $('#getMessages').val($('#getMessagesCb').prop('checked'))
+            $('#getEvents').val($('#getEventsCb').prop('checked'))
+
+            const before = new Date($("#before").val()).toDateString()
+            $("#before").text(before)
+            const after = new Date($("#after").val()).toDateString()
+            $("#after").text(after)
+
+            showMessage()
+
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .processFrontendSettings(formObject);
+        }
+
+        function hideError() {
+            var error = document.getElementById("error")
+            error.innerText = ""
+            error.style.visibility = "hidden"
+        }
+
+        function showMessage() {
+            var error = document.getElementById("error")
+            error.innerText = "Script is running. Settings sidebar will automatically close once script has been complete."
+            error.style.visibility = "visible"
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border-width: 1px;
+            border-style: none;
+        }
+
+        td label {
+            width: 155px;
+            display: block;
+        }
+
+        tr input {
+            width: 125px;
+        }
+
+        .checkbox {
+            width: auto;
+        }
+    </style>
+    <title></title>
+</head>
+<body>
+<form id="form" onsubmit="handleFormSubmit(this)">
+    <table>
+        <colgroup>
+            <col id=" label"/>
+            <col id="input"/>
+        </colgroup>
+
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Type of data to copy from BigQuery into this spreadsheet (select at least one)</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td><label for="getEventsCb"></label><input class='checkbox' id="getEventsCb" name='calendar'
+                                                        type="checkbox">Calendar
+            </td>
+        </tr>
+        <tr>
+            <td><label for="getMessagesCb"></label><input class='checkbox' id="getMessagesCb" name='email'
+                                                          type="checkbox">Email
+            </td>
+        </tr>
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Start and End date for data in BigQuery that will be copied into this spreadsheet (Please
+                provide both)
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td>
+                <label for="after" style="margin-bottom: 10px">Start Date</label>
+                <input id="after" name="after" style="width: 140px" type="date"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td>
+                <label for="before" style="margin-bottom: 10px">End Date</label>
+                <input id="before" name="before" style="width: 140px" type="date"/>
+            </td>
+        </tr>
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:25px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:30px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td>
+                <input id="okbutton" type="submit" value="Ok"/>
+            </td>
+            <td>
+                <input id="clear" onclick="clearSettings()" type="button" value="Clear Settings"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2"><label id="error"></label></td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>

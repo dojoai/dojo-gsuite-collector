@@ -1,0 +1,18 @@
+{
+    "env": {
+        "ADMIN_EMAIL": {
+            "description": "Please enter your email address",
+            "required": true
+        },
+        "CREDENTIALS_FILE": {
+            "description": "Please enter URL for the credentials file that you uploaded to Google Drive (see instructions)",
+            "required": true
+        }
+    },
+    "options": {
+        "allow-unauthenticated": true
+    },
+    "build": {
+        "skip": false
+    }
+}

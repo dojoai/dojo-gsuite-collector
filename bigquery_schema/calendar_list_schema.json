@@ -1,0 +1,37 @@
+[
+  {
+    "mode": "NULLABLE",
+    "name": "date",
+    "type": "DATE"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "datetime",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "num_attendees",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "duration",
+    "type": "FLOAT"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "location",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "attendees_list",
+    "type": "STRING"
+  },
+  {
+    "mode": "NULLABLE",
+    "name": "owner",
+    "type": "STRING"
+  }
+]

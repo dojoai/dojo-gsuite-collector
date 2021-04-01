@@ -1,0 +1,13 @@
+lib/
+__pycache__/
+process_data/__pycache__/
+
+credential.json
+*.idea*
+#config.py
+/node_modules
+.clasp.json
+appsscript.json
+package.json
+yarn.lock
+env/

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="">
+<head>
+    <base target="=_top">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script>
+        window.addEventListener('load', preventFormSubmit);
+
+        function preventFormSubmit() {
+            var forms = document.querySelectorAll('form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].addEventListener('submit', function (event) {
+                    event.preventDefault();
+                });
+            }
+        }
+
+        function clearSettings() {
+            if (!confirm('Are you sure you want to clear all settings?')) {
+                return
+            }
+
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .showSidebar('trigger_backend', 'Setup & Add Data to BigQuery');
+        }
+
+        function isFormInValid() {
+            if (($('#getMessagesCb').prop('checked') === false) && $('#getEventsCb').prop('checked') === false) return "Please select to retrieve at least Calendar or Email data."
+            if ($("#before").val() === "" || $("#after").val() === "") return "Start and End Dates are required"
+            if (($("#before").val() !== "" || $("#after").val() !== "") && $("#before").val() < $("#after").val()) return "End Date must occur after Start Date"
+
+            return false
+        }
+
+        function onFailure(e) {
+            var error = document.getElementById("error")
+            error.innerText = e + '\n\n If you see a timeout error message. Please copy and paste the URL in your web browser. You will receive an email once the script finish running. Keep the tab OPEN.'
+            error.style.visibility = "visible"
+        }
+
+        function onSuccess() {
+            showCompleteMessage()
+            google.script.host.close();
+        }
+
+        function handleFormSubmit(formObject) {
+            var inValid = isFormInValid();
+
+            if (inValid) {
+                onFailure(inValid)
+                return
+            }
+
+            $('#getMessages').val($('#getMessagesCb').prop('checked'))
+            $('#getEvents').val($('#getEventsCb').prop('checked'))
+            $('#createBQ').val($('#createBQCb').prop('checked'))
+            $('#internalOnly').val($('input:radio[name="intext"]:checked').val() === 'int')
+            $('#appendData').val($('input:radio[name="appendOverwrite"]:checked').val() === 'overwrite')
+
+            const before = new Date($("#before").val()).toDateString()
+            $("#before").text(before)
+            const after = new Date($("#after").val()).toDateString()
+            $("#after").text(after)
+
+            showMessage();
+
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onFailure)
+                .processBackendSettings(formObject);
+        }
+
+        function showCompleteMessage() {
+            var error = document.getElementById("error")
+            error.innerText = "Script is running. Settings sidebar will automatically close once script has been complete."
+            error.style.visibility = "visible"
+        }
+
+        function showMessage() {
+            var error = document.getElementById("error")
+            error.innerText = "Script is running. Settings sidebar will automatically close once script has been complete " +
+                "or you can close the settings and wait til you receive an email saying job is complete."
+            error.style.visibility = "visible"
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, Helvetica, sans-serif
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        td {
+            border-width: 1px;
+            border-style: none;
+        }
+
+        td label {
+            width: 155px;
+            display: block;
+        }
+
+        tr input {
+            width: 125px;
+        }
+
+        .checkbox {
+            width: auto;
+        }
+    </style>
+    <title></title>
+</head>
+<body>
+<form id="form" onsubmit="handleFormSubmit(this)">
+    <table>
+        <colgroup>
+            <col id=" label"/>
+            <col id="input"/>
+        </colgroup>
+
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Type of data (select at least one):</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td><label for="getEventsCb"></label><input checked class='checkbox' id="getEventsCb" name='calendar'
+                                                        type="checkbox">Calendar
+            </td>
+        </tr>
+        <tr>
+            <td><label for="getMessagesCb"></label><input checked class='checkbox' id="getMessagesCb" name='email'
+                                                          type="checkbox">Email
+            </td>
+        </tr>
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Show vs. hide external data (select one):</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2"><label for="int"></label><input checked class='checkbox' id="int" name="intext" type="radio"
+                                                            value='int'>Show
+                internal only <br> <i>(hide data from external domains)</i></td>
+        </tr>
+        <tr>
+            <td colspan="2"><label for="intext"></label><input class='checkbox' id="intext" name="intext" type="radio"
+                                                               value='intext'>Show internal
+                & external <br> <i> (include all data)</i></td>
+        </tr>
+
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Write to BigQuery (select one):</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2"><label for="overwrite"></label><input checked class='checkbox' id="overwrite"
+                                                                  name="appendOverwrite" type="radio"
+                                                                  value='overwrite'>Overwrite previously loaded data
+                <br> <i> (not possible if data loaded
+                    withnin the last 3 hours!) </i></td>
+        </tr>
+        <tr>
+            <td colspan="2"><label for="append"></label><input class='checkbox' id="append" name="appendOverwrite"
+                                                               type="radio" value='append'>Append
+                to previously loaded data <br> <i> (may cause duplicates if date ranges overlap) </i></td>
+        </tr>
+
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan="2">Start and End dates (provide both):</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:10px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td>
+                <label for="after" style="margin-bottom: 10px">Start Date</label>
+                <input id="after" name="after" style="width: 140px" type="date"/>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+        <tr>
+            <td>
+                <label for="before" style="margin-bottom: 10px">End Date</label>
+                <input id="before" name="before" style="width: 140px" type="date"/>
+            </td>
+        </tr>
+
+        <tr style="border-bottom:1px solid #A9A9A9">
+            <td colspan="2" style="line-height:25px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td colspan="2" style="line-height:20px">&nbsp;</td>
+        </tr>
+
+        <tr>
+            <td>
+                <input id="okbutton" type="submit" value="Ok"/>
+            </td>
+            <td>
+                <input id="clear" onclick="clearSettings()" type="button" value="Clear Settings"/>
+            </td>
+        </tr>
+
+        <tr>
+            <td colspan="2"><label id="error"></label></td>
+        </tr>
+    </table>
+</form>
+</body>
+</html>
